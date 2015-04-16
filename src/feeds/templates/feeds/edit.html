@@ -1,0 +1,77 @@
+{% extends 'layout/index.html' %}
+{% block content %}
+<style>
+	.control {border:1px solid black}
+	.editing_control {position:absolute}
+	.editing_control div{position:relative}
+	.module .title {}
+</style>
+	<div class="row">
+		<div class="col-md-4">
+			<div id="div_left_menu">
+				<h3>Fetch</h3>
+				<div>
+					<div control-type="xpathfetch" class="control">XPathFetch</div>
+					<div control-type="pagefetch" class="control">PageFetch</div>
+				</div>
+				<h3>Control</h3>
+				<div>ddd</div>
+			</div>
+		</div>
+		<div id="editor" class="col-md-8 edit-region" style="background:url(/static/img/grd8_bg_1.gif);height:1000px">
+			
+		</div>
+	</div>
+	<script>
+		$(function() {
+			$("#div_left_menu").accordion();
+		});
+		
+		$(function() {
+			$( ".control" ).draggable({ appendTo: "body", opacity: 0.7, helper: "clone" });
+			
+			$( "#editor" ).droppable({
+			      drop: function( event, ui ) {
+			    	  factory = new ControlFactory;
+			    	  newControl = factory.buildControl(ui.draggable.attr("control-type"));
+			    	  
+			    	  editorPosition = $("#editor").offset(); 
+			    	  newControl.ui.addClass("editing_control")
+			    	  	.css("top", event.pageY - editorPosition.top - 10)
+			    	  	.css("left", event.pageX - editorPosition.left - 30)
+			    	  	.appendTo( this );
+// 			    	  ui.draggable.clone()
+// 			    	  	.addClass("editing_control")
+// 			    	  	.css("top", event.offsetY)
+// 			    	  	.css("left", event.offsetX)
+// 			    	  	.appendTo( this );
+			      }
+			    });
+		});
+		
+		function control(){
+			this.ui = null;
+		}
+		
+		function XPathFetchControl(){
+			this.ui = $("<div>")
+				.addClass("module")
+				.html("<div class='title ui-widget-header'></div><div class='content'></div>");
+			
+			this.ui.find("div.title").text("XPathFetch");
+		}
+		function ControlFactory(){
+			this.buildControl = function(type){
+				switch(type){
+				case "xpathfetch":
+					return new XPathFetchControl;
+					break;
+				}
+			}
+		}
+		
+
+		
+		
+	</script>
+{% endblock %}
