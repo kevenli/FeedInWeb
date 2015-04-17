@@ -1,4 +1,9 @@
 {% extends 'layout/index.html' %}
 {% block content %}
-
+<a href='/feeds/edit'>New</a>
+<ul>
+	{% for feed in feeds %}
+		<li><a href='/feeds/edit/?id={{feed.feed_id}}'>{{ feed.feed_id }}</a></li>
+	{% endfor %}
+</ul>
 {% endblock %}

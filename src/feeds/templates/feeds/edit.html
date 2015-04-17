@@ -6,6 +6,7 @@
 
 {% block content %}
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+<input type="hidden" name="feed_id" value="{{feed_id}}">
 	<div class="row">
 		<div class="dol-md-12">
 			<div class="btn-group" role="group" aria-label="...">
@@ -75,6 +76,10 @@
 						editor.save();
 						
 				});
+				
+				if ($("input[name='feed_id']").val()){
+					editor.load($("input[name='feed_id']").val())
+				}
 		});
 
 		

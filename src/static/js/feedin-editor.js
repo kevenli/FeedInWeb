@@ -42,22 +42,30 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.ui.find("ul.buttons").append(
 				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
-		
+
 		this.type = 'xpathfetch';
 		this.id = null;
-		
-		this.getConf = function(){
+
+		this.getConf = function() {
 			conf = {};
 			conf['URL'] = this.ui.find("input[name='url']").val();
 			conf['xpath'] = this.ui.find("input[name='xpath']").val();
 			return conf;
+		}
+
+		this.terminals = [ {
+			'name' : '_OUTPUT'
+		} ];
+		this.getTerminals = function() {
+			return this.terminals;
 		}
 	}
 
 	function Editor() {
 		this.modules = [];
 		this.feedId = null;
-		this.init = function() {
+		this.init = function(settings) {
+			this.settings = settings;
 			$editor = this;
 			$(".control").draggable({
 				appendTo : "body",
@@ -96,18 +104,18 @@ JSON.stringify = JSON.stringify || function(obj) {
 
 		this.addModule = function(module) {
 			this.modules.push(module);
-			
+
 			module.id = this.generateModuleId();
-			
+
 			$editor = this;
-			module.ui.find(".buttons .remove").click(function(){
+			module.ui.find(".buttons .remove").click(function() {
 				$editor.removeModule(module);
 			})
 		};
-		
-		this.removeModule = function(module){
-			for(i=0;i<this.modules.length;i++){
-				if (module == this.modules[i]){
+
+		this.removeModule = function(module) {
+			for (i = 0; i < this.modules.length; i++) {
+				if (module == this.modules[i]) {
 					this.modules.pop(module);
 					module.ui.remove();
 					break;
@@ -122,31 +130,33 @@ JSON.stringify = JSON.stringify || function(obj) {
 				module = new XPathFetchModule;
 				break;
 			}
-			
+
 			return module;
 		};
-		
-		this.generateModuleId = function(){
+
+		this.generateModuleId = function() {
 			min = 0;
 			max = this.modules.length + 1;
-			while(true){
-				newId = 'm' + Math.floor(Math.random() * (max - min)) + min;
+			while (true) {
+				newId = 'm' + (Math.floor(Math.random() * (max - min)) + min);
 				found = false;
-				for(i=0;i<this.modules.length;i++){
-					if(this.modules[i].id == newId){
+				for (i = 0; i < this.modules.length; i++) {
+					if (this.modules[i].id == newId) {
 						found = true;
 						break;
 					}
 				}
-				if(!found){
+				if (!found) {
 					return newId;
 				}
 			}
-			
+
 		}
 
 		this.toJson = function() {
-			var obj = {'feed_id' : this.feedId};
+			var obj = {
+				'feed_id' : this.feedId
+			};
 			obj['modules'] = []
 			for (i = 0; i < this.modules.length; i++) {
 				obj['modules'].push({
@@ -157,30 +167,62 @@ JSON.stringify = JSON.stringify || function(obj) {
 			}
 			return JSON.stringify(obj);
 		}
-		
-		this.save = function(){
+
+		this.save = function() {
 			$editor = this;
 			$.ajax({
-				url:		'/feeds/save',
-				method: 'post',
-				data: {'feedinfo' : editor.toJson()},
-				dataType: 'json',
-				error : function(){
-						console.log("error");
+				url : $editor.settings['saveUrl'],
+				method : 'post',
+				data : {
+					'feedinfo' : editor.toJson()
 				},
-				success : function(data){
-						console.log("success");
-						$editor.feedId = data['feed_id']
+				dataType : 'json',
+				error : function() {
+					console.log("error");
+				},
+				success : function(data) {
+					console.log("success");
+					$editor.feedId = data['feed_id']
 				}
-		});
-		} 
+			});
+		};
+		
+		this._loadFeedData = function(data){
+			this.feedId = data['feed_id'];
+			for(i=0;i<data['modules'].length;i++){
+				
+			}
+		}
+
+		this.load = function(id) {
+			$editor = this;
+			$.ajax({
+				url : $editor.settings['loadUrl'],
+				method : 'get',
+				data : {
+					'id' : id
+				},
+				dataType : 'json',
+				error : function() {
+					console.log("error");
+				},
+				success : function(data) {
+					console.log("success");
+					//$editor.feedId = data['feed_id']
+					$editor._loadFeedData(data);
+				}
+			});
+		}
 	}
 
 	$.fn.editor = function(options) {
-		var settings = $.extend({}, options);
+		var settings = $.extend({
+			'saveUrl' : '/feeds/save', 
+			'loadUrl' : '/feeds/load'
+		}, options);
 		$("#div_left_menu").accordion();
 		var editor = new Editor;
-		editor.init();
+		editor.init(settings);
 		return editor;
 	};
 }(jQuery));

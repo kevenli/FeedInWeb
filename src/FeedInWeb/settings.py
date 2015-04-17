@@ -97,3 +97,5 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
     '/var/www/static/',
 )
+
+FEED_STORAGE_DIR = os.path.join(BASE_DIR, "feed_storage")
