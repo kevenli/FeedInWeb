@@ -1,18 +1,31 @@
 {% extends 'layout/index.html' %}
+{% block head %}
+	<link href="/static/css/feedin-editor.css" rel="stylesheet">
+	<script src="/static/js/feedin-editor.js"></script>
+{% endblock %}
+
 {% block content %}
-<style>
-	.control {border:1px solid black}
-	.editing_control {position:absolute}
-	.editing_control div{position:relative}
-	.module .title {}
-</style>
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+	<div class="row">
+		<div class="dol-md-12">
+			<div class="btn-group" role="group" aria-label="...">
+				<button id='btnSave'>Save</button>
+			  <button id="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only">
+			  <span class="ui-button-text">Save</span></button>
+			</div>
+		</div>
+	</div>
 	<div class="row">
 		<div class="col-md-4">
 			<div id="div_left_menu">
 				<h3>Fetch</h3>
 				<div>
-					<div control-type="xpathfetch" class="control">XPathFetch</div>
-					<div control-type="pagefetch" class="control">PageFetch</div>
+					<div control-type="xpathfetch" class="control">
+						<label class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-left ui-corner-right"><span class="ui-button">XPathFetch</span></label>
+					</div>
+					<div control-type="pagefetch" class="control">
+						<label class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-left ui-corner-right"><span class="ui-button">PageFetch</span></label>
+					</div>
 				</div>
 				<h3>Control</h3>
 				<div>ddd</div>
@@ -23,53 +36,46 @@
 		</div>
 	</div>
 	<script>
-		$(function() {
-			$("#div_left_menu").accordion();
+	
+	// using jQuery
+	function getCookie(name) {
+	    var cookieValue = null;
+	    if (document.cookie && document.cookie != '') {
+	        var cookies = document.cookie.split(';');
+	        for (var i = 0; i < cookies.length; i++) {
+	            var cookie = jQuery.trim(cookies[i]);
+	            // Does this cookie string begin with the name we want?
+	            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+	                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+	                break;
+	            }
+	        }
+	    }
+	    return cookieValue;
+	}
+	var csrftoken = getCookie('csrftoken');
+	
+	function csrfSafeMethod(method) {
+	    // these HTTP methods do not require CSRF protection
+	    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+	}
+	$.ajaxSetup({
+	    beforeSend: function(xhr, settings) {
+	        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+	            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	        }
+	    }
+	});
+	
+		$(function(){
+				editor = $("#editor").editor({'saveUrl':'/feeds/save'});
+				
+				$("#btnSave").click(function(){
+						console.log(editor.toJson());
+						editor.save();
+						
+				});
 		});
-		
-		$(function() {
-			$( ".control" ).draggable({ appendTo: "body", opacity: 0.7, helper: "clone" });
-			
-			$( "#editor" ).droppable({
-			      drop: function( event, ui ) {
-			    	  factory = new ControlFactory;
-			    	  newControl = factory.buildControl(ui.draggable.attr("control-type"));
-			    	  
-			    	  editorPosition = $("#editor").offset(); 
-			    	  newControl.ui.addClass("editing_control")
-			    	  	.css("top", event.pageY - editorPosition.top - 10)
-			    	  	.css("left", event.pageX - editorPosition.left - 30)
-			    	  	.appendTo( this );
-// 			    	  ui.draggable.clone()
-// 			    	  	.addClass("editing_control")
-// 			    	  	.css("top", event.offsetY)
-// 			    	  	.css("left", event.offsetX)
-// 			    	  	.appendTo( this );
-			      }
-			    });
-		});
-		
-		function control(){
-			this.ui = null;
-		}
-		
-		function XPathFetchControl(){
-			this.ui = $("<div>")
-				.addClass("module")
-				.html("<div class='title ui-widget-header'></div><div class='content'></div>");
-			
-			this.ui.find("div.title").text("XPathFetch");
-		}
-		function ControlFactory(){
-			this.buildControl = function(type){
-				switch(type){
-				case "xpathfetch":
-					return new XPathFetchControl;
-					break;
-				}
-			}
-		}
-		
 
 		
 		
