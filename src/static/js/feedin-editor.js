@@ -221,7 +221,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 					module.ui.append($("<div>").addClass("terminal south").append(terminalPoint));
 				}
 				
-				terminalPoint.draggable({helper:'clone', 
+				terminalPoint.draggable({helper:'clone',
+					appendTo : "body",
 					start:$editor.startWiring, 
 					stop:$editor.stopWiring, 
 					drag:$editor.dragWiring});
