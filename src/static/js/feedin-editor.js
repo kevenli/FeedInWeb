@@ -131,13 +131,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 
 		this.removeModule = function(module) {
-			for (i = 0; i < this.modules.length; i++) {
-				if (module == this.modules[i]) {
-					this.modules.pop(module);
-					module.ui.remove();
-					break;
-				}
-			}
+			this.modules.pop(module);
+			module.ui.remove();
 		}
 
 		this.buildModule = function(moduleType) {
@@ -157,8 +152,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 			while (true) {
 				newId = 'm' + (Math.floor(Math.random() * (max - min)) + min);
 				found = false;
-				for (i = 0; i < this.modules.length; i++) {
-					if (this.modules[i].id == newId) {
+				for (module in this.modules) {
+					if (module.id == newId) {
 						found = true;
 						break;
 					}
@@ -176,17 +171,18 @@ JSON.stringify = JSON.stringify || function(obj) {
 			};
 			obj['modules'] = []
 			obj['layout'] = []
-			for (i = 0; i < this.modules.length; i++) {
+			for (i in this.modules) {
+				module = this.modules[i];
 				obj['modules'].push({
-					'type' : this.modules[i].type,
-					'id' : this.modules[i].id,
-					'conf' : this.modules[i].getConf()
+					'type' : module.type,
+					'id' : module.id,
+					'conf' : module.getConf()
 				});
 				
 				obj['layout'].push({
-					'id' : this.modules[i].id,
-					'xy' : [this.modules[i].ui.position().left, 
-					        this.modules[i].ui.position().top]
+					'id' : module.id,
+					'xy' : [module.ui.position().left, 
+					        module.ui.position().top]
 				});
 			}
 			return JSON.stringify(obj);
@@ -245,7 +241,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 				},
 				success : function(data) {
 					console.log("success");
-					//$editor.feedId = data['feed_id']
 					$editor._loadFeedData(data);
 				}
 			});
