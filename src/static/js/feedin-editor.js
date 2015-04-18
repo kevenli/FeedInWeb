@@ -23,6 +23,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 };
 
 (function($) {
+	function ModuleTerminal(module, id, type){
+		this.id = id;
+		this.ui = $("<div>")
+			.addClass("terminal")
+			.addClass(type)
+			.append($("<span>").addClass("terminalrender ui-icon ui-icon-radio-off"));
+		this.ui[0].terminal = this;
+		this.module = module;
+	}
+	
 	function XPathFetchModule() {
 		this.ui = $("<div>")
 				.addClass("module")
@@ -63,12 +73,20 @@ JSON.stringify = JSON.stringify || function(obj) {
 			}
 		}
 
-		this.terminals = [ {
-			'name' : '_OUTPUT'
-		} ];
+		this.terminals = [
+		                  new ModuleTerminal(this, '_OUTPUT', 'south')
+		                  ];
 		this.getTerminals = function() {
 			return this.terminals;
 		}
+		
+		this.findTerminal = function(id){
+			for(terminalIndex in this.terminals){
+				if(this.terminals[terminalIndex].id == id){
+					return this.terminals[terminalIndex];
+				}
+			}
+		};
 	}
 	
 	function OutputModule(){
@@ -90,14 +108,22 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 		this.setConf = function(conf){
 			
-		}
+		};
 		
-		this.terminals = [ {
-			'name' : '_INPUT'
-		} ];
+		this.terminals = [ 
+		                   new ModuleTerminal(this, '_INPUT', 'north')
+		                   ];
 		this.getTerminals = function() {
 			return this.terminals;
-		}
+		};
+		
+		this.findTerminal = function(id){
+			for(terminalIndex in this.terminals){
+				if(this.terminals[terminalIndex].id == id){
+					return this.terminals[terminalIndex];
+				}
+			}
+		};
 		
 	}
 	
@@ -108,13 +134,15 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.src = {}
 		this.tgt = {}
 		
-		this.start = function(sourceControl, left, top){
-			
-			parent = $(sourceControl).parents(".terminal");
-			if (parent.hasClass("south")){
-				this.src = {};
-			}else if(parent.hasClass("north")){
-				this.tgt = {};
+		this.start = function(editingRegion, module, terminal, left, top){
+			left = terminal.ui.offset().left - editingRegion.offset().left;
+			top = terminal.ui.offset().top - editingRegion.offset().top;
+			if (terminal.id == '_OUTPUT'){
+				this.src['module'] = module;
+				this.src['terminal'] = terminal;
+			}else if(terminal.id =='_INPUT'){
+				this.tgt['module'] = module;
+				this.tgt['terminal'] = terminal;
 			}
 			
 			this._startPoint['left']=left;
@@ -147,6 +175,19 @@ JSON.stringify = JSON.stringify || function(obj) {
 			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'] - 5, top - this._startPoint['top'] - 5);
 			ctx.stroke();
 		};
+		
+		this.end = function(editingRegion, module, terminal){
+			endLeft = terminal.ui.offset().left - editingRegion.offset().left;
+			endTop = terminal.ui.offset().top - editingRegion.offset().top;
+			this.update(endLeft, endTop);
+			if (terminal.id == '_OUTPUT'){
+				this.src['module'] = module;
+				this.src['terminal'] = terminal;
+			}else if(terminal.id =='_INPUT'){
+				this.tgt['module'] = module;
+				this.tgt['terminal'] = terminal;
+			}
+		}
 		
 
 	}
@@ -202,7 +243,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 									cursor : "move",
 									containment : "#editor",
 									scroll : true, 
-									drag: $editor.onModuleMove
+									drag: function(event, ui){
+										$editor.onModuleMove(module, event, ui);
+									} 
 								});
 			
 			module.ui.css("position", "absolute");
@@ -210,22 +253,23 @@ JSON.stringify = JSON.stringify || function(obj) {
 			moduleTerminals = module.getTerminals();
 			for(terminalIndex in moduleTerminals){
 				terminal = moduleTerminals[terminalIndex];
-				terminalPoint = $("<span>").addClass("terminalrender ui-icon ui-icon-radio-off");
-				if (terminal.name=='_INPUT'){
-					module.ui.append($("<div>")
-							.addClass("terminal north")
-							.append(terminalPoint));
-				}
 				
-				if (terminal.name=='_OUTPUT'){
-					module.ui.append($("<div>").addClass("terminal south").append(terminalPoint));
-				}
+				terminalPoint = terminal.ui.find(".terminalrender")
 				
 				terminalPoint.draggable({helper:'clone',
 					appendTo : "body",
-					start:$editor.startWiring, 
-					stop:$editor.stopWiring, 
-					drag:$editor.dragWiring});
+					start: (function(editor, module, terminal){return function (event, ui){
+						editor.startWiring(module, terminal, event, ui);
+					}})($editor, module, terminal), 
+					stop: (function(editor, module, terminal){return function(event, ui){
+						editor.stopWiring(module, terminal, event, ui);
+					}})($editor, module, terminal),
+					drag:(function(editor, module, terminal){return function(event, ui){
+						editor.dragWiring(module, terminal, event, ui);
+						}})($editor, module, terminal)
+					});
+				
+				module.ui.append(terminal.ui);
 			}
 			
 			this.editingRegion.append(module.ui);
@@ -275,8 +319,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 			var obj = {
 				'feed_id' : this.feedId
 			};
-			obj['modules'] = []
-			obj['layout'] = []
+			obj['modules'] = [];
+			obj['layout'] = [];
+			obj['wires'] = [];
 			for (i in this.modules) {
 				module = this.modules[i];
 				obj['modules'].push({
@@ -290,6 +335,15 @@ JSON.stringify = JSON.stringify || function(obj) {
 					'xy' : [module.ui.position().left, 
 					        module.ui.position().top]
 				});
+			}
+			for (wireIndex in this.wires){
+				wire = this.wires[wireIndex];
+				obj['wires'].push(
+					{'src': {'id': wire.src.terminal.id, 
+						'moduleid': wire.src.module.id }, 
+					'tgt': {'id': wire.tgt.terminal.id, 
+						'moduleid': wire.tgt.module.id}}	
+				);
 			}
 			return JSON.stringify(obj);
 		}
@@ -312,6 +366,14 @@ JSON.stringify = JSON.stringify || function(obj) {
 			});
 		};
 		
+		this.findModule = function(id){
+			for(moduleIndex in this.modules){
+				if (this.modules[moduleIndex].id == id){
+					return this.modules[moduleIndex];
+				}
+			}
+		};
+		
 		this._loadFeedData = function(data){
 			this.feedId = data['feed_id'];
 			for(i=0;i<data['modules'].length;i++){
@@ -329,6 +391,20 @@ JSON.stringify = JSON.stringify || function(obj) {
 							break;
 						}
 					}
+				}
+			}
+			
+			if(data['wires']){
+				for(wireIndex in data['wires']){
+					wireInfo = data['wires'][wireIndex];
+					wire = new Wire();
+					sourceModule = this.findModule(wireInfo.src.moduleid);
+					sourceTerminal = sourceModule.findTerminal(wireInfo.src.id);
+					targetModule = this.findModule(wireInfo.tgt.moduleid);
+					targetTerminal = targetModule.findTerminal(wireInfo.tgt.id);
+					wire.start(this.editingRegion, sourceModule, sourceTerminal);
+					wire.end(this.editingRegion, targetModule, targetTerminal);
+					this.editingRegion.append(wire.canvas);
 				}
 			}
 		}
@@ -356,15 +432,18 @@ JSON.stringify = JSON.stringify || function(obj) {
 		}
 		
 		this.currentWire = null;
-		this.startWiring = function(event, ui){
+		this.startWiring = function(module, terminal, event, ui){
+			console.log("startWiring");
+			console.log(module);
+			console.log(terminal);
 			wire = new Wire;
 			editorPosition = $("#editor").offset();
 			sourceControl = ui.helper[0];
-			wire.start(sourceControl, ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);
+			wire.start(this.editingRegion, module, terminal, ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);
 			
 			$editor.currentWire = wire;
 			wire.canvas.appendTo($editor.editingRegion);
-			console.log("startWiring");
+			
 		};
 		
 		function getElsAt(root, top, left){
@@ -378,28 +457,32 @@ JSON.stringify = JSON.stringify || function(obj) {
 		               });
 		}
 		
-		this.dragWiring = function(event, ui){
+		this.dragWiring = function(module, terminal, event, ui){
 			console.log("dragWiring");
 			editorPosition = $("#editor").offset();
 			$editor.currentWire.update(ui.offset.left - editorPosition.left + 10, 
 					ui.offset.top - editorPosition.top + 10);
 		};
 		
-		this.stopWiring = function(event, ui){
+		this.stopWiring = function(module, terminal, event, ui){
 			console.log("stopWiring");
 			stopPoint = [event.pageX, event.pageY]
 			console.log(stopPoint);
 			pointElements = getElsAt($editor.editingRegion, event.pageY, event.pageX);
 			console.log(pointElements);
 			if (pointElements.length>0){
+				
+				terminal = pointElements.parents(".terminal")[0].terminal;
+				$editor.currentWire.end($editor.editingRegion, terminal.module, terminal);
 				$editor.wires.push($editor.currentWire);
+				console.log(terminal);
 			}else{
 				$editor.currentWire.canvas.remove();
 			}
 		};
 		
-		this.onModuleMove = function(event, ui){
-			module = ui.helper[0];
+		this.onModuleMove = function(module, event, ui){
+			//module = ui.helper[0];
 			console.log("on module move");
 			console.log(module);
 		}
