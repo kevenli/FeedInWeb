@@ -405,6 +405,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 					wire.start(this.editingRegion, sourceModule, sourceTerminal);
 					wire.end(this.editingRegion, targetModule, targetTerminal);
 					this.editingRegion.append(wire.canvas);
+					this.wires.push(wire);
 				}
 			}
 		}
