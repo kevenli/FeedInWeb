@@ -19,7 +19,7 @@ def index(request):
 
 def edit(request):
     context = {}
-    if request.GET['id']:
+    if 'id' in request.GET and request.GET['id']:
         context['feed_id'] = request.GET['id']
     return render(request, 'feeds/edit.html', context)
 

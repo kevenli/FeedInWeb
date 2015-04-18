@@ -70,10 +70,76 @@ JSON.stringify = JSON.stringify || function(obj) {
 			return this.terminals;
 		}
 	}
+	
+	function OutputModule(){
+		this.ui = $("<div>")
+			.addClass("module")
+			.html(
+				"<div>"
+						+ "<div class='title ui-widget-header'><span></span>"
+						+ "<ul class='buttons'></ul>"
+						+ "</div>"
+						+ "</div>");
+		this.ui.find("div.title>span").text("Output");
+		
+		this.id = "_OUTPUT"
+		this.getConf = function(){
+			return [];
+		}
+		
+		this.setConf = function(conf){
+			
+		}
+		
+		this.terminals = [ {
+			'name' : '_INPUT'
+		} ];
+		this.getTerminals = function() {
+			return this.terminals;
+		}
+		
+	}
+	
+	function Wire(){
+		this._startPoint = {};
+		this._endPoint = {};
+		this.canvas = $("<canvas>");
+		
+		this.update = function(left, top){
+			this._endPoint['left'] = left;
+			this._endPoint['top'] = top;
+			canvas = this.canvas[0];
+			canvas.width = left - this._startPoint['left'] +  10;
+			canvas.height = top - this._startPoint['top'] + 10;
+			
+			
+			var ctx=this.canvas[0].getContext("2d");
+			ctx.lineWidth=5;
+			ctx.fillStyle="blue";
+			ctx.lineCap="round";
+			ctx.shadowColor="blue";
+			ctx.shadowBlur = 10;
+			ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+			ctx.beginPath();
+			ctx.moveTo(5,5);
+			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'], top - this._startPoint['top']);
+			ctx.stroke();
+		};
+		
+		this.start = function(left, top){
+			this._startPoint['left']=left;
+			this._startPoint['top']=top;
+			this.canvas.css("position", 'absolute');
+			//this.canvas.css("background-color", "white");
+			this.canvas.css("top", top);
+			this.canvas.css("left", left);
+		};
+	}
 
 	function Editor() {
 		this.modules = [];
 		this.feedId = null;
+		this.wires = [];
 		this.init = function(settings) {
 			this.settings = settings;
 			$editor = this;
@@ -110,7 +176,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			if(!module.id){
 				module.id = this.generateModuleId();
 			}
-			$editor = this;
+			
 			module.ui.find(".buttons .remove").click(function() {
 				$editor.removeModule(module);
 			})
@@ -124,6 +190,26 @@ JSON.stringify = JSON.stringify || function(obj) {
 								});
 			
 			module.ui.css("position", "absolute");
+			
+			moduleTerminals = module.getTerminals();
+			for(terminalIndex in moduleTerminals){
+				terminal = moduleTerminals[terminalIndex];
+				terminalPoint = $("<span>").addClass("ui-icon ui-icon-radio-off");
+				if (terminal.name=='_INPUT'){
+					module.ui.append($("<div>")
+							.addClass("ternimal north")
+							.append(terminalPoint));
+				}
+				
+				if (terminal.name=='_OUTPUT'){
+					module.ui.append($("<div>").addClass("ternimal south").append(terminalPoint));
+				}
+				
+				terminalPoint.draggable({helper:'clone', 
+					start:$editor.startWiring, 
+					stop:$editor.stopWiring, 
+					drag:$editor.dragWiring});
+			}
 			
 			this.editingRegion.append(module.ui);
 			
@@ -140,6 +226,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 			switch (moduleType) {
 			case "xpathfetch":
 				module = new XPathFetchModule;
+				break;
+			case "output":
+				module = new OutputModule;
 				break;
 			}
 
@@ -189,7 +278,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 		}
 
 		this.save = function() {
-			$editor = this;
 			$.ajax({
 				url : $editor.settings['saveUrl'],
 				method : 'post',
@@ -221,6 +309,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 						if (data['layout'][j].id == module.id){
 							module.ui.css("left", data['layout'][j].xy[0]);
 							module.ui.css("top", data['layout'][j].xy[1]);
+							break;
 						}
 					}
 				}
@@ -245,6 +334,48 @@ JSON.stringify = JSON.stringify || function(obj) {
 				}
 			});
 		}
+		
+		this.currentWire = null;
+		this.startWiring = function(event, ui){
+			wire = new Wire;
+			editorPosition = $("#editor").offset();
+			wire.start(ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);
+			
+			$editor.currentWire = wire;
+			wire.canvas.appendTo($editor.editingRegion);
+			console.log("startWiring");
+		};
+		
+		function getElsAt(root, top, left){
+		    return $(root)
+		               .find(".ternimal")
+		               .filter(function() {
+		                           return $(this).offset().top <= top + 5 
+		                           			&& $(this).offset().top + $(this).height() >= top -5
+		                                    && $(this).offset().left <= left + 5
+		                                    && $(this).offset().left + $(this).width() >= left-5;
+		               });
+		}
+		
+		this.dragWiring = function(event, ui){
+			console.log("dragWiring");
+			editorPosition = $("#editor").offset();
+			$editor.currentWire.update(ui.offset.left - editorPosition.left + 10, 
+					ui.offset.top - editorPosition.top + 10);
+		};
+		
+		this.stopWiring = function(event, ui){
+			console.log("stopWiring");
+			stopPoint = [event.pageX, event.pageY]
+			console.log(stopPoint);
+			pointElements = getElsAt($editor.editingRegion, event.pageY, event.pageX);
+			console.log(pointElements);
+			if (pointElements.length>0){
+				$editor.wires.push($editor.currentWire);
+			}else{
+				$editor.currentWire.canvas.remove();
+			}
+		};
 	}
 
 	$.fn.editor = function(options) {
