@@ -82,7 +82,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 						+ "</div>");
 		this.ui.find("div.title>span").text("Output");
 		
-		this.id = "_OUTPUT"
+		this.id = "_OUTPUT";
+		this.type = 'output';
 		this.getConf = function(){
 			return [];
 		}
@@ -104,6 +105,25 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this._startPoint = {};
 		this._endPoint = {};
 		this.canvas = $("<canvas>");
+		this.src = {}
+		this.tgt = {}
+		
+		this.start = function(sourceControl, left, top){
+			
+			parent = $(sourceControl).parents(".terminal");
+			if (parent.hasClass("south")){
+				this.src = {};
+			}else if(parent.hasClass("north")){
+				this.tgt = {};
+			}
+			
+			this._startPoint['left']=left;
+			this._startPoint['top']=top;
+			this.canvas.css("position", 'absolute');
+			//this.canvas.css("background-color", "white");
+			this.canvas.css("top", top + 5);
+			this.canvas.css("left", left - 5);
+		};
 		
 		this.update = function(left, top){
 			this._endPoint['left'] = left;
@@ -114,26 +134,21 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			
 			var ctx=this.canvas[0].getContext("2d");
-			ctx.lineWidth=5;
+			ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+			ctx.translate(5,5);
+			ctx.lineWidth=2;
 			ctx.fillStyle="blue";
 			ctx.lineCap="round";
 			ctx.shadowColor="blue";
-			ctx.shadowBlur = 10;
-			ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
+			ctx.shadowBlur = 5;
+			
 			ctx.beginPath();
-			ctx.moveTo(5,5);
-			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'], top - this._startPoint['top']);
+			ctx.moveTo(0,0);
+			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'] - 5, top - this._startPoint['top'] - 5);
 			ctx.stroke();
 		};
 		
-		this.start = function(left, top){
-			this._startPoint['left']=left;
-			this._startPoint['top']=top;
-			this.canvas.css("position", 'absolute');
-			//this.canvas.css("background-color", "white");
-			this.canvas.css("top", top);
-			this.canvas.css("left", left);
-		};
+
 	}
 
 	function Editor() {
@@ -186,7 +201,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 			module.ui.draggable({
 									cursor : "move",
 									containment : "#editor",
-									scroll : true
+									scroll : true, 
+									drag: $editor.onModuleMove
 								});
 			
 			module.ui.css("position", "absolute");
@@ -194,15 +210,15 @@ JSON.stringify = JSON.stringify || function(obj) {
 			moduleTerminals = module.getTerminals();
 			for(terminalIndex in moduleTerminals){
 				terminal = moduleTerminals[terminalIndex];
-				terminalPoint = $("<span>").addClass("ui-icon ui-icon-radio-off");
+				terminalPoint = $("<span>").addClass("terminalrender ui-icon ui-icon-radio-off");
 				if (terminal.name=='_INPUT'){
 					module.ui.append($("<div>")
-							.addClass("ternimal north")
+							.addClass("terminal north")
 							.append(terminalPoint));
 				}
 				
 				if (terminal.name=='_OUTPUT'){
-					module.ui.append($("<div>").addClass("ternimal south").append(terminalPoint));
+					module.ui.append($("<div>").addClass("terminal south").append(terminalPoint));
 				}
 				
 				terminalPoint.draggable({helper:'clone', 
@@ -339,7 +355,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.startWiring = function(event, ui){
 			wire = new Wire;
 			editorPosition = $("#editor").offset();
-			wire.start(ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);
+			sourceControl = ui.helper[0];
+			wire.start(sourceControl, ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);
 			
 			$editor.currentWire = wire;
 			wire.canvas.appendTo($editor.editingRegion);
@@ -348,7 +365,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 		function getElsAt(root, top, left){
 		    return $(root)
-		               .find(".ternimal")
+		               .find(".terminalrender")
 		               .filter(function() {
 		                           return $(this).offset().top <= top + 5 
 		                           			&& $(this).offset().top + $(this).height() >= top -5
@@ -376,6 +393,12 @@ JSON.stringify = JSON.stringify || function(obj) {
 				$editor.currentWire.canvas.remove();
 			}
 		};
+		
+		this.onModuleMove = function(event, ui){
+			module = ui.helper[0];
+			console.log("on module move");
+			console.log(module);
+		}
 	}
 
 	$.fn.editor = function(options) {
