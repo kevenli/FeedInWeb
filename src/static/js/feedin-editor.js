@@ -52,6 +52,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 			conf['xpath'] = this.ui.find("input[name='xpath']").val();
 			return conf;
 		}
+		
+		this.setConf = function(conf){
+			if (conf['URL']){
+				this.ui.find("input[name='url']").val(conf['URL']);
+			}
+			
+			if(conf['xpath']){
+				this.ui.find("input[name='xpath']").val(conf['xpath']);
+			}
+		}
 
 		this.terminals = [ {
 			'name' : '_OUTPUT'
@@ -73,6 +83,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 				helper : "clone",
 				cursor : "move"
 			});
+			
+			this.editingRegion = settings['editingRegion'];
 
 			$("#editor").droppable(
 					{
@@ -83,20 +95,10 @@ JSON.stringify = JSON.stringify || function(obj) {
 								$editor.addModule(newControl);
 
 								editorPosition = $("#editor").offset();
-								newControl.ui.addClass("editing_control").css(
-										"top",
-										event.pageY - editorPosition.top - 10)
-										.css(
-												"left",
-												event.pageX
-														- editorPosition.left
-														- 30).appendTo(this);
+								newControl.ui.css("top",event.pageY - editorPosition.top - 10)
+										.css("left",event.pageX	- editorPosition.left- 30);
 
-								newControl.ui.draggable({
-									cursor : "move",
-									containment : "#editor",
-									scroll : true
-								});
+								
 							}
 						}
 					});
@@ -105,12 +107,27 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.addModule = function(module) {
 			this.modules.push(module);
 
-			module.id = this.generateModuleId();
-
+			if(!module.id){
+				module.id = this.generateModuleId();
+			}
 			$editor = this;
 			module.ui.find(".buttons .remove").click(function() {
 				$editor.removeModule(module);
 			})
+			
+			module.ui.addClass("editing_control");
+			
+			module.ui.draggable({
+									cursor : "move",
+									containment : "#editor",
+									scroll : true
+								});
+			
+			module.ui.css("position", "absolute");
+			
+			this.editingRegion.append(module.ui);
+			
+			
 		};
 
 		this.removeModule = function(module) {
@@ -158,11 +175,18 @@ JSON.stringify = JSON.stringify || function(obj) {
 				'feed_id' : this.feedId
 			};
 			obj['modules'] = []
+			obj['layout'] = []
 			for (i = 0; i < this.modules.length; i++) {
 				obj['modules'].push({
 					'type' : this.modules[i].type,
 					'id' : this.modules[i].id,
 					'conf' : this.modules[i].getConf()
+				});
+				
+				obj['layout'].push({
+					'id' : this.modules[i].id,
+					'xy' : [this.modules[i].ui.position().left, 
+					        this.modules[i].ui.position().top]
 				});
 			}
 			return JSON.stringify(obj);
@@ -190,7 +214,20 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this._loadFeedData = function(data){
 			this.feedId = data['feed_id'];
 			for(i=0;i<data['modules'].length;i++){
+				moduleInfo = data['modules'][i];
+				module = this.buildModule(moduleInfo.type);
+				module.id = moduleInfo.id;
+				module.setConf(moduleInfo.conf);
+				this.addModule(module);
 				
+				if (data['layout']){
+					for(j=0;j<data['layout'].length;j++){
+						if (data['layout'][j].id == module.id){
+							module.ui.css("left", data['layout'][j].xy[0]);
+							module.ui.css("top", data['layout'][j].xy[1]);
+						}
+					}
+				}
 			}
 		}
 
@@ -220,6 +257,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			'saveUrl' : '/feeds/save', 
 			'loadUrl' : '/feeds/load'
 		}, options);
+		settings['editingRegion'] = this;
 		$("#div_left_menu").accordion();
 		var editor = new Editor;
 		editor.init(settings);
