@@ -333,6 +333,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 		}
 
 		this.load = function(id) {
+			for(moduleIndex in this.modules){
+				this.removeModule(this.modules[moduleIndex]);
+			}
 			$editor = this;
 			$.ajax({
 				url : $editor.settings['loadUrl'],
@@ -410,6 +413,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 		$("#div_left_menu").accordion();
 		var editor = new Editor;
 		editor.init(settings);
+		outputModule = editor.buildModule('output');
+		editor.addModule(outputModule);
 		return editor;
 	};
 }(jQuery));
