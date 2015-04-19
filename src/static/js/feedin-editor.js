@@ -130,6 +130,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 	function Wire(){
 		this._startPoint = {};
 		this._endPoint = {};
+		this.borderWidth = 5;
 		this.canvas = $("<canvas>");
 		this.src = {}
 		this.tgt = {}
@@ -149,21 +150,37 @@ JSON.stringify = JSON.stringify || function(obj) {
 			this._startPoint['top']=top;
 			this.canvas.css("position", 'absolute');
 			//this.canvas.css("background-color", "white");
-			this.canvas.css("top", top + 5);
-			this.canvas.css("left", left - 5);
+			this.canvas.css("top", top - this.borderWidth);
+			this.canvas.css("left", left - this.borderWidth);
 		};
 		
 		this.update = function(left, top){
 			this._endPoint['left'] = left;
 			this._endPoint['top'] = top;
+			newCornor = [5,5];
+			startPoint = [this._startPoint.left, this._startPoint.top];
+			controlPoint1 = [0, 100];
+			endPoint = [left, top];
+			if (top < this._startPoint.top){
+				this.canvas.css('top', top - this.borderWidth);
+				newCornor = [5, this._startPoint.top - top + 5];
+			}
 			canvas = this.canvas[0];
-			canvas.width = left - this._startPoint['left'] +  10;
-			canvas.height = top - this._startPoint['top'] + 10;
+			canvasWidth = left - this._startPoint['left'] +  10;
+			canvasHeight = top - this._startPoint['top'] + 10;
+			if (endPoint[1] < startPoint[1]){
+				canvasHeight = startPoint[1] - endPoint[1] + controlPoint1[1];
+			}
+			if (canvasHeight < 100){
+				canvasHeight = 100;
+			}
+			canvas.width = canvasWidth;
+			canvas.height = canvasHeight;
 			
 			
 			var ctx=this.canvas[0].getContext("2d");
 			ctx.clearRect ( 0 , 0 , canvas.width, canvas.height );
-			ctx.translate(5,5);
+			ctx.translate(newCornor[0], newCornor[1]);
 			ctx.lineWidth=2;
 			ctx.fillStyle="blue";
 			ctx.lineCap="round";
@@ -172,7 +189,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			ctx.beginPath();
 			ctx.moveTo(0,0);
-			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'] - 5, top - this._startPoint['top'] - 5);
+			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'], top - this._startPoint['top'] - 10);
 			ctx.stroke();
 		};
 		
@@ -461,8 +478,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.dragWiring = function(module, terminal, event, ui){
 			console.log("dragWiring");
 			editorPosition = $("#editor").offset();
-			$editor.currentWire.update(ui.offset.left - editorPosition.left + 10, 
-					ui.offset.top - editorPosition.top + 10);
+			$editor.currentWire.update(ui.offset.left + ui.helper.width() / 2 - editorPosition.left, 
+					ui.offset.top + ui.helper.height() /2 - editorPosition.top);
 		};
 		
 		this.stopWiring = function(module, terminal, event, ui){
