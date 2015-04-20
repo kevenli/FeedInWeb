@@ -135,9 +135,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.src = {}
 		this.tgt = {}
 		
-		this.start = function(editingRegion, module, terminal, left, top){
-			left = terminal.ui.offset().left - editingRegion.offset().left;
-			top = terminal.ui.offset().top - editingRegion.offset().top;
+		this.start = function(editingRegion, module, terminal){
+			startleft = terminal.ui.offset().left - editingRegion.offset().left;
+			starttop = terminal.ui.offset().top - editingRegion.offset().top;
 			if (terminal.id == '_OUTPUT'){
 				this.src['module'] = module;
 				this.src['terminal'] = terminal;
@@ -146,13 +146,13 @@ JSON.stringify = JSON.stringify || function(obj) {
 				this.tgt['terminal'] = terminal;
 			}
 			
-			this._startPoint['left']=left;
-			this._startPoint['top']=top;
+			this._startPoint['left']=startleft;
+			this._startPoint['top']=starttop;
 			this.canvas.css("position", 'absolute');
 			// canvas background color, for debug only
 			//this.canvas.css("background-color", "white");   
-			this.canvas.css("top", top - this.borderWidth);
-			this.canvas.css("left", left - this.borderWidth);
+			this.canvas.css("top", starttop - this.borderWidth);
+			this.canvas.css("left", startleft - this.borderWidth);
 		};
 		
 		this.update = function(left, top){
@@ -514,7 +514,21 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.onModuleMove = function(module, event, ui){
 			//module = ui.helper[0];
 			console.log("on module move");
-			console.log(module);
+			
+			for (wireIndex in this.wires){
+				wire = this.wires[wireIndex];
+				if (wire.src.module == module){
+					//console.log(module);
+					wire.start(this.editingRegion, module, wire.src.terminal);
+					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
+							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
+					break;
+				}else if(wire.tgt.module == module){
+					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
+							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
+					break;
+				}
+			}
 		}
 	}
 
