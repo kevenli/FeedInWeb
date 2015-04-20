@@ -33,7 +33,23 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.module = module;
 	}
 	
+	function Module(){
+		this.terminals = [];
+		this.getTerminals = function() {
+			return this.terminals;
+		};
+		
+		this.findTerminal = function(id){
+			for(terminalIndex in this.terminals){
+				if(this.terminals[terminalIndex].id == id){
+					return this.terminals[terminalIndex];
+				}
+			}
+		};
+	}
+	
 	function XPathFetchModule() {
+		Module.call(this);
 		this.ui = $("<div>")
 				.addClass("module")
 				.html(
@@ -76,20 +92,11 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.terminals = [
 		                  new ModuleTerminal(this, '_OUTPUT', 'south')
 		                  ];
-		this.getTerminals = function() {
-			return this.terminals;
-		}
-		
-		this.findTerminal = function(id){
-			for(terminalIndex in this.terminals){
-				if(this.terminals[terminalIndex].id == id){
-					return this.terminals[terminalIndex];
-				}
-			}
-		};
+
 	}
 	
 	function OutputModule(){
+		Module.call(this);
 		this.ui = $("<div>")
 			.addClass("module")
 			.html(
@@ -113,17 +120,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.terminals = [ 
 		                   new ModuleTerminal(this, '_INPUT', 'north')
 		                   ];
-		this.getTerminals = function() {
-			return this.terminals;
-		};
-		
-		this.findTerminal = function(id){
-			for(terminalIndex in this.terminals){
-				if(this.terminals[terminalIndex].id == id){
-					return this.terminals[terminalIndex];
-				}
-			}
-		};
 		
 	}
 	
