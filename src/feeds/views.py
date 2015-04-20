@@ -30,6 +30,7 @@ def save(request):
         feed_id = data['feed_id']
     else:
         feed_id = str(uuid.uuid4())
+        data['feed_id'] = feed_id
     folder = os.path.join( settings.FEED_STORAGE_DIR + '/' + feed_id)
     if not os.path.exists(folder):
         os.makedirs(folder)

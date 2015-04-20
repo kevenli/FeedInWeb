@@ -34,6 +34,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 	}
 	
 	function Module(){
+		this.type = null;
+		this.id = null;
 		this.terminals = [];
 		this.getTerminals = function() {
 			return this.terminals;
@@ -50,6 +52,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 	
 	function XPathFetchModule() {
 		Module.call(this);
+		this.type = 'xpathfetch';
 		this.ui = $("<div>")
 				.addClass("module")
 				.html(
@@ -68,9 +71,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.ui.find("ul.buttons").append(
 				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
-
-		this.type = 'xpathfetch';
-		this.id = null;
 
 		this.getConf = function() {
 			conf = {};
@@ -97,6 +97,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 	
 	function OutputModule(){
 		Module.call(this);
+		this.id = "_OUTPUT";
+		this.type = 'output';
+
 		this.ui = $("<div>")
 			.addClass("module")
 			.html(
@@ -107,8 +110,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 						+ "</div>");
 		this.ui.find("div.title>span").text("Output");
 		
-		this.id = "_OUTPUT";
-		this.type = 'output';
 		this.getConf = function(){
 			return [];
 		}
@@ -337,7 +338,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 			while (true) {
 				newId = 'm' + (Math.floor(Math.random() * (max - min)) + min);
 				found = false;
-				for (module in this.modules) {
+				for (moduleIndex in this.modules) {
+					module = this.modules[moduleIndex];
 					if (module.id == newId) {
 						found = true;
 						break;
