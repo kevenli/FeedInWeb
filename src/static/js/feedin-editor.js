@@ -149,7 +149,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 			this._startPoint['left']=left;
 			this._startPoint['top']=top;
 			this.canvas.css("position", 'absolute');
-			this.canvas.css("background-color", "white");
+			// canvas background color, for debug only
+			//this.canvas.css("background-color", "white");   
 			this.canvas.css("top", top - this.borderWidth);
 			this.canvas.css("left", left - this.borderWidth);
 		};
@@ -159,7 +160,12 @@ JSON.stringify = JSON.stringify || function(obj) {
 			this._endPoint['top'] = top;
 			newCornor = [this.borderWidth,this.borderWidth];
 			startPoint = [0, 0];
-			controlPoint1 = [0, 100];
+			if (this.src.terminal){
+				controlPoint1 = [0, 100];
+			}else{
+				controlPoint1 = [0, -100];
+			}
+			
 			endPoint = [left - this._startPoint.left, top - this._startPoint.top];
 
 			canvas = this.canvas[0];
