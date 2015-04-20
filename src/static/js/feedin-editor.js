@@ -305,6 +305,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.removeModule = function(module) {
 			this.modules.pop(module);
 			module.ui.remove();
+			
+			for(wireIndex in this.wires){
+				wire = this.wires[wireIndex];
+				if (wire.tgt.module == module){
+					this.removeWire(wire);
+				}
+				if (wire.src.module == module){
+					this.removeWire(wire);
+				}
+			}
 		}
 
 		this.buildModule = function(moduleType) {
@@ -429,8 +439,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 					targetTerminal = targetModule.findTerminal(wireInfo.tgt.id);
 					wire.start(this.editingRegion, sourceModule, sourceTerminal);
 					wire.end(this.editingRegion, targetModule, targetTerminal);
-					this.editingRegion.append(wire.canvas);
-					this.wires.push(wire);
+					//this.editingRegion.append(wire.canvas);
+					//this.wires.push(wire);
+					this.addWire(wire);
 				}
 			}
 		}
@@ -469,7 +480,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			$editor.currentWire = wire;
 			wire.canvas.appendTo($editor.editingRegion);
-			
 		};
 		
 		function getElsAt(root, top, left){
@@ -491,20 +501,30 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 		
 		this.stopWiring = function(module, terminal, event, ui){
-			console.log("stopWiring");
+			//console.log("stopWiring");
 			stopPoint = [event.pageX, event.pageY]
-			console.log(stopPoint);
+			//console.log(stopPoint);
 			pointElements = getElsAt($editor.editingRegion, event.pageY, event.pageX);
-			console.log(pointElements);
+			//console.log(pointElements);
 			if (pointElements.length>0){
 				
 				terminal = pointElements.parents(".terminal")[0].terminal;
-				$editor.currentWire.end($editor.editingRegion, terminal.module, terminal);
-				$editor.wires.push($editor.currentWire);
-				console.log(terminal);
+				this.currentWire.end($editor.editingRegion, terminal.module, terminal);
+				this.addWire($editor.currentWire);
+				//console.log(terminal);
 			}else{
 				$editor.currentWire.canvas.remove();
 			}
+		};
+		
+		this.addWire = function(wire){
+			this.editingRegion.append(wire.canvas);
+			this.wires.push(wire);
+		};
+		
+		this.removeWire = function(wire){
+			wire.canvas.remove();
+			this.wires.pop(wire);
 		};
 		
 		this.onModuleMove = function(module, event, ui){
@@ -525,7 +545,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 					break;
 				}
 			}
-		}
+		};
+		
 	}
 
 	$.fn.editor = function(options) {
