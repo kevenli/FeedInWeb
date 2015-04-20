@@ -510,7 +510,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 				
 				terminal = pointElements.parents(".terminal")[0].terminal;
 				this.currentWire.end($editor.editingRegion, terminal.module, terminal);
-				this.addWire($editor.currentWire);
+				for(wireIndex in this.wires){
+					existingWire = this.wires[wireIndex];
+					if (existingWire.tgt.terminal == this.currentWire.tgt.terminal){
+						this.removeWire(existingWire);
+					}
+					if (existingWire.src.terminal == this.currentWire.src.terminal){
+						this.removeWire(existingWire);
+					}
+				}
+				this.addWire(this.currentWire);
 				//console.log(terminal);
 			}else{
 				$editor.currentWire.canvas.remove();
