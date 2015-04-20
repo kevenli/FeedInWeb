@@ -149,7 +149,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			this._startPoint['left']=left;
 			this._startPoint['top']=top;
 			this.canvas.css("position", 'absolute');
-			//this.canvas.css("background-color", "white");
+			this.canvas.css("background-color", "white");
 			this.canvas.css("top", top - this.borderWidth);
 			this.canvas.css("left", left - this.borderWidth);
 		};
@@ -157,23 +157,28 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.update = function(left, top){
 			this._endPoint['left'] = left;
 			this._endPoint['top'] = top;
-			newCornor = [5,5];
-			startPoint = [this._startPoint.left, this._startPoint.top];
+			newCornor = [this.borderWidth,this.borderWidth];
+			startPoint = [0, 0];
 			controlPoint1 = [0, 100];
-			endPoint = [left, top];
-			if (top < this._startPoint.top){
-				this.canvas.css('top', top - this.borderWidth);
-				newCornor = [5, this._startPoint.top - top + 5];
-			}
+			endPoint = [left - this._startPoint.left, top - this._startPoint.top];
+
 			canvas = this.canvas[0];
-			canvasWidth = left - this._startPoint['left'] +  10;
-			canvasHeight = top - this._startPoint['top'] + 10;
-			if (endPoint[1] < startPoint[1]){
-				canvasHeight = startPoint[1] - endPoint[1] + controlPoint1[1];
-			}
-			if (canvasHeight < 100){
-				canvasHeight = 100;
-			}
+			canvasWidth = Math.max(startPoint[0], controlPoint1[0], endPoint[0]) - 
+				Math.min(startPoint[0], controlPoint1[0], endPoint[0])
+				+ this.borderWidth * 2;
+			
+			canvasHeight = Math.max(startPoint[1], controlPoint1[1], endPoint[1]) 
+				- Math.min(startPoint[1], controlPoint1[1], endPoint[1])
+				+ this.borderWidth * 2;
+			
+			canvasOffsetX = Math.min(startPoint[0], controlPoint1[0], endPoint[0]);
+			canvasOffsetY = Math.min(startPoint[1], controlPoint1[1], endPoint[1]);
+			
+			this.canvas.css('top', this._startPoint.top + canvasOffsetY - this.borderWidth);
+			this.canvas.css('left', this._startPoint.left + canvasOffsetX - this.borderWidth);
+			
+			newCornor = [-canvasOffsetX + this.borderWidth, -canvasOffsetY + this.borderWidth];
+
 			canvas.width = canvasWidth;
 			canvas.height = canvasHeight;
 			
@@ -189,7 +194,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			ctx.beginPath();
 			ctx.moveTo(0,0);
-			ctx.quadraticCurveTo(0,100,left - this._startPoint['left'], top - this._startPoint['top'] - 10);
+			ctx.quadraticCurveTo(controlPoint1[0], controlPoint1[1],
+					endPoint[0], endPoint[1]);
 			ctx.stroke();
 		};
 		
