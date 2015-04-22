@@ -112,7 +112,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 		this.getConf = function(){
 			return [];
-		}
+		};
 		
 		this.setConf = function(conf){
 			
@@ -124,13 +124,47 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 	}
 	
+	function RenameModule(){
+		Module.call(this);
+		this.id = null;
+		this.type = 'rename';
+
+		this.ui = $("<div>")
+			.addClass("module")
+			.html(
+				"<div>"
+						+ "<div class='title ui-widget-header'><span></span>"
+						+ "<ul class='buttons'></ul>"
+						+ "</div>"
+						+ "<div class='content'>"
+						+ "<div><input name='replace_0'><select class='op' name='op'/><input name='with_0'></div>"
+						+ "</div>"
+						+ "</div>");
+		this.ui.find("select.op").append("<option value='rename'>Rename</option>");
+		this.ui.find("select.op").append("<option value='copy'>Copy</option>");
+		this.ui.find("div.title>span").text("Rename");
+		
+		this.getConf = function(){
+			return [];
+		};
+		
+		this.setConf = function(conf){
+			
+		};
+		
+		this.terminals = [ 
+		                   new ModuleTerminal(this, '_INPUT', 'north'),
+		                   new ModuleTerminal(this, '_OUTPUT', 'south')
+		                   ];
+	}
+	
 	function Wire(){
 		this._startPoint = {};
 		this._endPoint = {};
 		this.borderWidth = 5;
 		this.canvas = $("<canvas>");
-		this.src = {}
-		this.tgt = {}
+		this.src = {};
+		this.tgt = {};
 		this.editiongRegion = null;
 		
 		this.start = function(editingRegion, module, terminal){
@@ -222,9 +256,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 				this.tgt['module'] = module;
 				this.tgt['terminal'] = terminal;
 			}
-		}
-		
-
+		};
 	}
 
 	function Editor() {
@@ -335,6 +367,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 				break;
 			case "output":
 				module = new OutputModule;
+				break;
+			case "rename":
+				module = new RenameModule;
 				break;
 			}
 
@@ -518,7 +553,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 			pointElements = getElsAt($editor.editingRegion, event.pageY, event.pageX);
 			//console.log(pointElements);
 			if (pointElements.length>0){
-				
 				terminal = pointElements.parents(".terminal")[0].terminal;
 				this.currentWire.end($editor.editingRegion, terminal.module, terminal);
 				for(wireIndex in this.wires){
@@ -558,11 +592,11 @@ JSON.stringify = JSON.stringify || function(obj) {
 					wire.start(this.editingRegion, module, wire.src.terminal);
 					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
 							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
-					break;
+					
 				}else if(wire.tgt.module == module){
 					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
 							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
-					break;
+					
 				}
 			}
 		};
