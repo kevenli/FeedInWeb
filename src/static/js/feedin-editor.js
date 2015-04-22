@@ -143,6 +143,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.ui.find("select.op").append("<option value='rename'>Rename</option>");
 		this.ui.find("select.op").append("<option value='copy'>Copy</option>");
 		this.ui.find("div.title>span").text("Rename");
+		this.ui.find("ul.buttons").append(
+				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
+				$("<li>").addClass("remove ui-icon ui-icon-close"));
 		
 		this.getConf = function(){
 			return [];
@@ -162,7 +165,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this._startPoint = {};
 		this._endPoint = {};
 		this.borderWidth = 5;
-		this.canvas = $("<canvas>");
+		this.canvas = $("<canvas>").addClass("wire");
 		this.src = {};
 		this.tgt = {};
 		this.editiongRegion = null;
@@ -186,6 +189,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			//this.canvas.css("background-color", "white");   
 			this.canvas.css("top", starttop - this.borderWidth);
 			this.canvas.css("left", startleft - this.borderWidth);
+			this.canvas.addClass("wire-current");
 		};
 		
 		this.update = function(left, top){
@@ -256,6 +260,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 				this.tgt['module'] = module;
 				this.tgt['terminal'] = terminal;
 			}
+			this.canvas.removeClass("wire-current");
 		};
 	}
 
@@ -345,7 +350,11 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 
 		this.removeModule = function(module) {
-			this.modules.pop(module);
+			index = this.modules.indexOf(module);
+			if(index > -1){
+				this.modules.splice(index, 1);
+			}
+			//this.modules.pop(module);
 			module.ui.remove();
 			
 			for(wireIndex in this.wires){
@@ -578,7 +587,10 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 		this.removeWire = function(wire){
 			wire.canvas.remove();
-			this.wires.pop(wire);
+			var index = this.wires.indexOf(wire);
+			if (index >- 1){
+				this.wires.splice(index, 1);
+			}
 		};
 		
 		this.onModuleMove = function(module, event, ui){
@@ -589,7 +601,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 				wire = this.wires[wireIndex];
 				if (wire.src.module == module){
 					//console.log(module);
-					wire.start(this.editingRegion, module, wire.src.terminal);
+					//wire.start(this.editingRegion, module, wire.src.terminal);
 					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
 							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
 					

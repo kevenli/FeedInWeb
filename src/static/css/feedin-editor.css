@@ -1,5 +1,5 @@
 	.control label{width:150px;text-align:left;padding-left:5px}
-	.editing_control {position:absolute}
+	.editing_control {z-index:1;position:absolute}
 	.editing_control div{position:relative}
 	.module {position:absolute;min-width:150px;}
 	.module .title {}
@@ -11,4 +11,5 @@
 	.edit-region .editing_control .terminal .terminalrender{margin-left:-8px;}
 	.edit-region .editing_control .south{top:auto;right:auto;left:50%;bottom:0px;}
 	.edit-region .editing_control .north{top:0px;right:auto;left:50%;bottom:auto;}
-	
+	.edit-region canvas.wire {z-index:0;}
+	.edit-region canvas.wire-current {z-index:9999;}
