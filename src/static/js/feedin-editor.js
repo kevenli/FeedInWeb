@@ -131,8 +131,10 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.canvas = $("<canvas>");
 		this.src = {}
 		this.tgt = {}
+		this.editiongRegion = null;
 		
 		this.start = function(editingRegion, module, terminal){
+			this.editingRegion = editingRegion;
 			startleft = terminal.ui.offset().left - editingRegion.offset().left;
 			starttop = terminal.ui.offset().top - editingRegion.offset().top;
 			if (terminal.id == '_OUTPUT'){
@@ -161,6 +163,13 @@ JSON.stringify = JSON.stringify || function(obj) {
 				controlPoint1 = [0, 100];
 			}else{
 				controlPoint1 = [0, -100];
+			}
+			
+			if (this.src && this.src.terminal){
+				this._startPoint.left = this.src.terminal.ui.offset().left
+					- this.editingRegion.offset().left;
+				this._startPoint.top = this.src.terminal.ui.offset().top
+					- this.editingRegion.offset().top;
 			}
 			
 			endPoint = [left - this._startPoint.left, top - this._startPoint.top];
