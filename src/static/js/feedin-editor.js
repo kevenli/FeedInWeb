@@ -111,7 +111,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.ui.find("div.title>span").text("Output");
 		
 		this.getConf = function(){
-			return [];
+			return null;
 		};
 		
 		this.setConf = function(conf){
@@ -148,7 +148,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
 		
 		this.getConf = function(){
-			return [];
+			return null;
 		};
 		
 		this.setConf = function(conf){
@@ -307,7 +307,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			module.ui.find(".buttons .remove").click(function() {
 				$editor.removeModule(module);
-			})
+			});
 			
 			module.ui.addClass("editing_control");
 			
