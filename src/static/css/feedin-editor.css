@@ -13,3 +13,4 @@
 	.edit-region .editing_control .north{top:0px;right:auto;left:50%;bottom:auto;}
 	.edit-region canvas.wire {z-index:0;}
 	.edit-region canvas.wire-current {z-index:9999;}
+	.edit-region .LoopModule .empty {height:100px;}

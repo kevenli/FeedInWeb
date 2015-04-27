@@ -52,7 +52,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 	
 	function XPathFetchModule() {
 		Module.call(this);
-		this.type = 'xpathfetch';
+		this.type = 'xpathfetchpage';
 		this.ui = $("<div>")
 				.addClass("module")
 				.html(
@@ -67,31 +67,102 @@ JSON.stringify = JSON.stringify || function(obj) {
 								+ "<div><span>Emit items as string</span><input type='checkbox' /></div>"
 								+ "</div>" + "</div>");
 
-		this.ui.find("div.title>span").text("XPathFetch");
+		this.ui.find("div.title>span").text("XPath Fetch Page");
 		this.ui.find("ul.buttons").append(
 				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
 
 		this.getConf = function() {
 			conf = {};
-			conf['URL'] = this.ui.find("input[name='url']").val();
-			conf['xpath'] = this.ui.find("input[name='xpath']").val();
+			urlValue = this.ui.find("input[name='url']").val();
+			if (urlValue.startsWith("item.")){
+				conf['URL'] = {'subkey': urlValue.substring(5)}
+			}else{
+				conf['URL'] = {'value' :urlValue, 'type':'url'};
+			}
+			
+			conf['xpath'] = {'value' :this.ui.find("input[name='xpath']").val(), 'type':'text'};
 			return conf;
 		}
 		
 		this.setConf = function(conf){
-			if (conf['URL']){
-				this.ui.find("input[name='url']").val(conf['URL']);
+			if (conf['URL']['value']){
+				this.ui.find("input[name='url']").val(conf['URL']['value']);
+			}else if(conf['URL']['subkey']){
+				this.ui.find("input[name='url']").val("item." + conf['URL']['subkey']);
 			}
 			
 			if(conf['xpath']){
-				this.ui.find("input[name='xpath']").val(conf['xpath']);
+				this.ui.find("input[name='xpath']").val(conf['xpath']['value']);
 			}
 		}
 
 		this.terminals = [
 		                  new ModuleTerminal(this, '_OUTPUT', 'south')
 		                  ];
+
+	}
+	
+	function LoopModule() {
+		Module.call(this);
+		this.type = 'loop';
+		this.ui = $("<div>")
+				.addClass("module")
+				.addClass("LoopModule")
+				.html(
+						"<div>"
+								+ "<div class='title ui-widget-header'><span></span>"
+								+ "<ul class='buttons'></ul>"
+								+ "</div>"
+								+ "<div class='content'>"
+								+ "<form>"
+								+ "<div><span>For each <input name='with' /> in input</span></div>"
+								+ "<div class='submodule empty'></div>"
+								+ '<div><input name="mode" type="radio" value="EMIT">emit <select name="emit_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results</div>'
+								+ "<div><span>Use HTML parser</span><input type='checkbox' /></div>"
+								+ "<div><span>Emit items as string</span><input type='checkbox' /></div>"
+								+ "</form>"
+								+ "</div>" + "</div>");
+
+		this.ui.find("div.title>span").text("Loop");
+		this.ui.find("ul.buttons").append(
+				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
+				$("<li>").addClass("remove ui-icon ui-icon-close"));
+
+		this.getConf = function() {
+			return null;
+		}
+		
+		this.setConf = function(conf){
+			if (conf.embed){
+				var submodule = $editor.buildModule(conf.embed.value.type);
+				submodule.id = conf.embed.value.id;
+				submodule.setConf(conf.embed.value.conf);
+				this.ui.find(".submodule").append(submodule.ui).removeClass("empty");
+				submodule.ui.find(".remove").click((function(parent, submodule){
+					return function(event){
+						event.stopPropagation();
+						parent.removeSubModule(submodule);
+						};
+				})(this, submodule));
+			}
+			
+			if(conf['with']){
+				if(conf['with']['value'] == ""){
+					this.ui.find("form input[name='with']").val("item");
+				}
+			}
+		}
+
+		this.terminals = [
+		                  new ModuleTerminal(this, '_OUTPUT', 'south'),
+		                  new ModuleTerminal(this, '_INPUT', 'north')
+		                  ];
+		
+		this.removeSubModule = function(module){
+			module.ui.remove();
+			this.ui.find(".submodule").addClass("empty")
+		};
 
 	}
 	
@@ -305,8 +376,10 @@ JSON.stringify = JSON.stringify || function(obj) {
 				module.id = this.generateModuleId();
 			}
 			
-			module.ui.find(".buttons .remove").click(function() {
-				$editor.removeModule(module);
+			module.ui.find(".buttons .remove").click(function(event) {
+				if (!event.isPropagationStopped){
+					$editor.removeModule(module);
+				}
 			});
 			
 			module.ui.addClass("editing_control");
@@ -369,9 +442,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 		}
 
 		this.buildModule = function(moduleType) {
-			module = null;
+			var module;
 			switch (moduleType) {
-			case "xpathfetch":
+			case "xpathfetchpage":
 				module = new XPathFetchModule;
 				break;
 			case "output":
@@ -379,6 +452,9 @@ JSON.stringify = JSON.stringify || function(obj) {
 				break;
 			case "rename":
 				module = new RenameModule;
+				break;
+			case "loop":
+				module = new LoopModule;
 				break;
 			}
 
@@ -413,12 +489,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 			obj['layout'] = [];
 			obj['wires'] = [];
 			for (i in this.modules) {
-				module = this.modules[i];
-				obj['modules'].push({
-					'type' : module.type,
-					'id' : module.id,
-					'conf' : module.getConf()
-				});
+				var module = this.modules[i];
+				module_config = {
+						'type' : module.type,
+						'id' : module.id
+					}
+				conf = module.getConf();
+				if (conf){
+					module_config['conf'] = conf;
+				}
+				obj['modules'].push(module_config);
 				
 				obj['layout'].push({
 					'id' : module.id,
@@ -528,7 +608,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			console.log("startWiring");
 			console.log(module);
 			console.log(terminal);
-			wire = new Wire;
+			var wire = new Wire;
 			editorPosition = $("#editor").offset();
 			sourceControl = ui.helper[0];
 			wire.start(this.editingRegion, module, terminal, ui.offset.left - editorPosition.left, ui.offset.top - editorPosition.top);

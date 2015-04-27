@@ -48,5 +48,7 @@ def load(request):
         feed_data = f.read()
     return HttpResponse(feed_data)
     
+def debug(request):
+    pass
         
     
