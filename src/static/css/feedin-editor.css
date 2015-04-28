@@ -14,3 +14,5 @@
 	.edit-region canvas.wire {z-index:0;}
 	.edit-region canvas.wire-current {z-index:9999;}
 	.edit-region .LoopModule .empty {height:100px;}
+	.edit-region .RenameModule .paramadd{width:12px;height:16px;background:url(../img/lstadd_btn_nrm_2.png) no-repeat}
+	.edit-region .RenameModule .paramdel{width:12px;height:16px;background:url(../img/lstdel_btn_nrm_2.png) no-repeat}

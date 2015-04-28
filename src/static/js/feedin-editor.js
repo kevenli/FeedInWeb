@@ -142,7 +142,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			}
 			conf['mode'] = {"type":"text", "value": this.ui.find("input[name=mode]:checked").val()};
 			conf['emit_part'] = {"type":"text", "value": this.ui.find("form select[name=emit_part]").val()};
-			conf['assign_part'] = {"type":"text", "value": this.ui.find("form select[name=emit_part]").val()};
+			conf['assign_part'] = {"type":"text", "value": this.ui.find("form select[name=assign_part]").val()};
 			conf['assign_to'] = {"type":"text", "value": this.ui.find("form input[name=assign_to]").val()};
 			return conf;
 		}
@@ -230,12 +230,14 @@ JSON.stringify = JSON.stringify || function(obj) {
 
 		this.ui = $("<div>")
 			.addClass("module")
+			.addClass("RenameModule")
 			.html(
 				"<div>"
 						+ "<div class='title ui-widget-header'><span></span>"
 						+ "<ul class='buttons'></ul>"
 						+ "</div>"
 						+ "<div class='content'>"
+						+ "<div><img class='paramadd'></div>"
 						+ "<ul class='paramlist' key='RULE'>"
 						+ "</ul>"
 						+ "</div>"
@@ -246,6 +248,11 @@ JSON.stringify = JSON.stringify || function(obj) {
 		this.ui.find("ul.buttons").append(
 				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
+		this.ui.find("img.paramadd").click((function(module){
+			return function(){
+				module.addRule();
+			}
+		})(this));
 		
 		this.getConf = function(){
 			conf = {"RULE": []};
@@ -283,12 +290,16 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 		
 		this.addRule = function(field, op, newval){
-			$options = $("<select>")
+			var $options = $("<select>")
 				.addClass("op")
 				.append($("<option value='rename'>").text("Rename"))
 				.append($("<option value='copy'>").text("Copy"))
 				.val(op);
+			var $delbtn = $("<img>").addClass("paramdel").click(function(e){
+				$(this).parents("li").remove();
+			});
 			$("<li>").append($("<div>")
+					.append($delbtn)
 					.append($("<input>").addClass("field").val(field))
 					.append($options)
 					.append($("<input>").addClass("newval").val(newval)))
@@ -485,10 +496,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 				
 				module.ui.append(terminal.ui);
 			}
-			
 			this.editingRegion.append(module.ui);
-			
-			
 		};
 
 		this.removeModule = function(module) {
@@ -641,8 +649,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 					targetTerminal = targetModule.findTerminal(wireInfo.tgt.id);
 					wire.start(this.editingRegion, sourceModule, sourceTerminal);
 					wire.end(this.editingRegion, targetModule, targetTerminal);
-					//this.editingRegion.append(wire.canvas);
-					//this.wires.push(wire);
 					this.addWire(wire);
 				}
 			}
@@ -703,11 +709,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 		
 		this.stopWiring = function(module, terminal, event, ui){
-			//console.log("stopWiring");
 			stopPoint = [event.pageX, event.pageY]
-			//console.log(stopPoint);
 			pointElements = getElsAt($editor.editingRegion, event.pageY, event.pageX);
-			//console.log(pointElements);
 			if (pointElements.length>0){
 				terminal = pointElements.parents(".terminal")[0].terminal;
 				this.currentWire.end($editor.editingRegion, terminal.module, terminal);
@@ -721,7 +724,6 @@ JSON.stringify = JSON.stringify || function(obj) {
 					}
 				}
 				this.addWire(this.currentWire);
-				//console.log(terminal);
 			}else{
 				$editor.currentWire.canvas.remove();
 			}
@@ -741,21 +743,15 @@ JSON.stringify = JSON.stringify || function(obj) {
 		};
 		
 		this.onModuleMove = function(module, event, ui){
-			//module = ui.helper[0];
-			console.log("on module move");
-			
 			for (wireIndex in this.wires){
 				wire = this.wires[wireIndex];
 				if (wire.src.module == module){
-					//console.log(module);
-					//wire.start(this.editingRegion, module, wire.src.terminal);
 					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
 							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
 					
 				}else if(wire.tgt.module == module){
 					wire.update(wire.tgt.terminal.ui.offset().left - this.editingRegion.offset().left, 
 							wire.tgt.terminal.ui.offset().top - this.editingRegion.offset().top);
-					
 				}
 			}
 		};
