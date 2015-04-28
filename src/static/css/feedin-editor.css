@@ -6,7 +6,7 @@
 	.module .title .buttons {position:absolute;right:1px;top:1px}
 	.module .title .buttons li{display:block;float:left}
 	.module .content {background-color:white}
-	.edit-region {background:url(/static/img/grd8_bg_1.gif);height:1000px}
+	.edit-region {background:url(/static/img/grd8_bg_1.gif);height:1000px;overflow:auto}
 	.edit-region .editing_control .terminal{position: absolute;  cursor: pointer;  z-index: 2;  white-space: nowrap;  line-height: 0px;}
 	.edit-region .editing_control .terminal .terminalrender{margin-left:-8px;}
 	.edit-region .editing_control .south{top:auto;right:auto;left:50%;bottom:0px;}

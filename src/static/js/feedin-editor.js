@@ -464,14 +464,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			
 			module.ui.addClass("editing_control");
 			
-			module.ui.draggable({
-									cursor : "move",
-									containment : "#editor",
-									scroll : true, 
-									drag: function(event, ui){
-										$editor.onModuleMove(module, event, ui);
-									} 
-								});
+
 			
 			module.ui.css("position", "absolute");
 			
@@ -497,6 +490,13 @@ JSON.stringify = JSON.stringify || function(obj) {
 				module.ui.append(terminal.ui);
 			}
 			this.editingRegion.append(module.ui);
+			module.ui.draggable({
+				cursor : "move",
+				scroll : true, 
+				drag: function(event, ui){
+					$editor.onModuleMove(module, event, ui);
+				} 
+			});
 		};
 
 		this.removeModule = function(module) {
