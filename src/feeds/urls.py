@@ -8,5 +8,6 @@ urlpatterns = [
     url(r'^index$', views.index, name='index'),
     url(r'^edit/', views.edit, name='edit'),
     url(r'^save$', views.save, name='save'),
-    url(r'^load$', views.load, name='load')
+    url(r'^load$', views.load, name='load'),
+    url(r'^debug$', views.debug, name='debug')
 ]

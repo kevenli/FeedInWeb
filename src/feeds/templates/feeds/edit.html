@@ -13,6 +13,7 @@
 			<div class="btn-group" role="group" aria-label="...">
 				<button id='btnSave'>Save</button>
 				<a href="/feeds">Back</a>
+				<button id='btnDebug'>Debug</button>
 			</div>
 		</div>
 	</div>
@@ -27,7 +28,6 @@
 					<div control-type="pagefetch" class="control">
 						<label class="ui-button ui-widget ui-state-default ui-button-text-only ui-corner-left ui-corner-right"><span class="ui-button">PageFetch</span></label>
 					</div>
-
 				</div>
 				<h3>Operators</h3>
 				<div>
@@ -51,6 +51,25 @@
 				$("#btnSave").click(function(){
 						console.log(editor.toJson());
 						editor.save();
+				});
+				
+				$("#btnDebug").click(function(){
+					console.log(editor.toJson());
+					$.ajax({
+						url : '/feeds/debug',
+						method : 'post',
+						data : {
+							'_def' : editor.toJson()
+						},
+						dataType : 'json',
+						error : function() {
+							console.log("error");
+						},
+						success : function(data) {
+							console.log("success");
+							console.log(data);
+						}
+					});
 				});
 				
 				if ($("input[name='feed_id']").val()){

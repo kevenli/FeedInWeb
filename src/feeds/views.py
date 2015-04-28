@@ -6,6 +6,7 @@ import logging
 import os
 import uuid
 from django.conf import settings
+import feedin
 
 # Create your views here.
 def index(request):
@@ -49,6 +50,11 @@ def load(request):
     return HttpResponse(feed_data)
     
 def debug(request):
-    pass
+    feed_def = request.POST['_def'];
+    engine = feedin.engine.Engine()
+    job = engine.create(feed_def)
+    job.execute()
+    ret = json.dumps(job.context.items)
+    return HttpResponse(ret)
         
     
