@@ -76,7 +76,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			conf = {};
 			urlValue = this.ui.find("input[name='url']").val();
 			if (urlValue.startsWith("item.")){
-				conf['URL'] = {'subkey': urlValue.substring(5)}
+				conf['URL'] = {'subkey': urlValue.substring(5), 'type':'text'}
 			}else{
 				conf['URL'] = {'value' :urlValue, 'type':'url'};
 			}
@@ -446,7 +446,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 			}
 			
 			module.ui.find(".buttons .remove").click(function(event) {
-				if (!event.isPropagationStopped){
+				if (!event.isPropagationStopped()){
 					$editor.removeModule(module);
 				}
 			});
@@ -496,15 +496,13 @@ JSON.stringify = JSON.stringify || function(obj) {
 			if(index > -1){
 				this.modules.splice(index, 1);
 			}
-			//this.modules.pop(module);
 			module.ui.remove();
 			
-			for(wireIndex in this.wires){
-				wire = this.wires[wireIndex];
+			for(var i=this.wires.length-1;i>=0;i--){
+				var wire = this.wires[i];
 				if (wire.tgt.module == module){
 					this.removeWire(wire);
-				}
-				if (wire.src.module == module){
+				}else if (wire.src.module == module){
 					this.removeWire(wire);
 				}
 			}
