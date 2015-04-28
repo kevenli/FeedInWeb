@@ -208,7 +208,8 @@ JSON.stringify = JSON.stringify || function(obj) {
 						+ "<ul class='buttons'></ul>"
 						+ "</div>"
 						+ "<div class='content'>"
-						+ "<div><input name='replace_0'><select class='op' name='op'/><input name='with_0'></div>"
+						+ "<ul class='paramlist' key='RULE'>"
+						+ "</ul>"
 						+ "</div>"
 						+ "</div>");
 		this.ui.find("select.op").append("<option value='rename'>Rename</option>");
@@ -219,11 +220,51 @@ JSON.stringify = JSON.stringify || function(obj) {
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
 		
 		this.getConf = function(){
-			return null;
+			conf = {"RULE": []};
+			
+			this.ui.find("ul.paramlist li").each(function(i, e){
+				var $e = $(e);
+				var rule = {
+						"field" : {
+							"type" : "text",
+							"value" : $e.find("input.field").val()
+						},
+						"op" : {
+							"type" : "text",
+							"value" : $e.find("select.op").val()
+						},
+						"newval":{
+							"type": "text",
+							"value" : $e.find("input.newval").val()
+						}
+						
+				}
+				conf.RULE.push(rule);
+			});
+			return conf;
 		};
 		
 		this.setConf = function(conf){
-			
+			if(conf.RULE){
+				for(ruleIndex in conf.RULE){
+					this.addRule(conf.RULE[ruleIndex]['field']['value'], 
+							conf.RULE[ruleIndex]['op']['value'], 
+							conf.RULE[ruleIndex]['newval']['value']);
+				}
+			}
+		};
+		
+		this.addRule = function(field, op, newval){
+			$options = $("<select>")
+				.addClass("op")
+				.append($("<option value='rename'>").text("Rename"))
+				.append($("<option value='copy'>").text("Copy"))
+				.val(op);
+			$("<li>").append($("<div>")
+					.append($("<input>").addClass("field").val(field))
+					.append($options)
+					.append($("<input>").addClass("newval").val(newval)))
+				.appendTo(this.ui.find("ul.paramlist"));
 		};
 		
 		this.terminals = [ 
