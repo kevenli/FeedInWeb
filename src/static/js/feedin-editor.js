@@ -106,6 +106,7 @@ JSON.stringify = JSON.stringify || function(obj) {
 	function LoopModule() {
 		Module.call(this);
 		this.type = 'loop';
+		this.subModule = null;
 		this.ui = $("<div>")
 				.addClass("module")
 				.addClass("LoopModule")
@@ -116,11 +117,10 @@ JSON.stringify = JSON.stringify || function(obj) {
 								+ "</div>"
 								+ "<div class='content'>"
 								+ "<form>"
-								+ "<div><span>For each <input name='with' /> in input</span></div>"
+								+ "<div><span>For each <input name='with' value='item' /> in input</span></div>"
 								+ "<div class='submodule empty'></div>"
-								+ '<div><input name="mode" type="radio" value="EMIT">emit <select name="emit_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results</div>'
-								+ "<div><span>Use HTML parser</span><input type='checkbox' /></div>"
-								+ "<div><span>Emit items as string</span><input type='checkbox' /></div>"
+								+ '<div><input name="mode" type="radio" value="emit">emit <select name="emit_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results</div>'
+								+ '<div><input name="mode" type="radio" value="assign">assign <select name="assign_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results to <input name="assign_to" /></div>'
 								+ "</form>"
 								+ "</div>" + "</div>");
 
@@ -130,13 +130,28 @@ JSON.stringify = JSON.stringify || function(obj) {
 				$("<li>").addClass("remove ui-icon ui-icon-close"));
 
 		this.getConf = function() {
-			return null;
+			var conf = {};
+			if (this.subModule){
+				conf['embed'] = {
+						"value" : {
+							"type" : this.subModule.type,
+							"id" : this.subModule.id,
+							"conf" : this.subModule.getConf()
+						}
+				};
+			}
+			conf['mode'] = {"type":"text", "value": this.ui.find("input[name=mode]:checked").val()};
+			conf['emit_part'] = {"type":"text", "value": this.ui.find("form select[name=emit_part]").val()};
+			conf['assign_part'] = {"type":"text", "value": this.ui.find("form select[name=emit_part]").val()};
+			conf['assign_to'] = {"type":"text", "value": this.ui.find("form input[name=assign_to]").val()};
+			return conf;
 		}
 		
 		this.setConf = function(conf){
 			if (conf.embed){
 				var submodule = $editor.buildModule(conf.embed.value.type);
 				submodule.id = conf.embed.value.id;
+				this.subModule = submodule;
 				submodule.setConf(conf.embed.value.conf);
 				this.ui.find(".submodule").append(submodule.ui).removeClass("empty");
 				submodule.ui.find(".remove").click((function(parent, submodule){
@@ -151,6 +166,19 @@ JSON.stringify = JSON.stringify || function(obj) {
 				if(conf['with']['value'] == ""){
 					this.ui.find("form input[name='with']").val("item");
 				}
+			}
+			
+			if(conf['mode']){
+				this.ui.find("form input[name='mode'][value=" + conf['mode']['value'] + "]").attr("checked", "checked");
+			}
+			if(conf['emit_part']){
+				this.ui.find("form select[name=emit_part]").val(conf['emit_part']['value']);
+			}
+			if(conf['assign_part']){
+				this.ui.find("form select[name=assign_part]").val(conf['assign_part']['value']);
+			}
+			if(conf['assign_to']){
+				this.ui.find("form input[name=assign_to]").val(conf['assign_to']['value']);
 			}
 		}
 
