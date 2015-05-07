@@ -6,7 +6,6 @@ urlpatterns = patterns('',
     # url(r'^$', 'FeedInWeb.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
 
-    url(r'^admin/', include(admin.site.urls)),
     url(r'^users/', include('users.urls')),
     url(r'^feeds/', include('feeds.urls')),
     url(r'^$', 'pages.views.index', name='index'),
