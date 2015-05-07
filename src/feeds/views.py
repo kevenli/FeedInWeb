@@ -47,6 +47,9 @@ def load(request):
     folder = os.path.join( settings.FEED_STORAGE_DIR + '/' + feed_id)
     with open(os.path.join(folder, 'feed.json'), 'r') as f:
         feed_data = f.read()
+    feed_model = json.loads(feed_data)
+    feed_model['feed_id'] = feed_id
+    feed_data = json.dumps(feed_model)
     return HttpResponse(feed_data)
     
 def debug(request):
