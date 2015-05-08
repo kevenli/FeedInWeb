@@ -107,27 +107,35 @@ JSON.stringify = JSON.stringify || function(obj) {
 		Module.call(this);
 		this.type = 'loop';
 		this.subModule = null;
-		this.ui = $("<div>")
-				.addClass("module")
-				.addClass("LoopModule")
-				.html(
-						"<div>"
-								+ "<div class='title ui-widget-header'><span></span>"
-								+ "<ul class='buttons'></ul>"
-								+ "</div>"
-								+ "<div class='content'>"
-								+ "<form>"
-								+ "<div><span>For each <input name='with' value='item' /> in input</span></div>"
-								+ "<div class='submodule empty'></div>"
-								+ '<div><input name="mode" type="radio" value="emit">emit <select name="emit_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results</div>'
-								+ '<div><input name="mode" type="radio" value="assign">assign <select name="assign_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results to <input name="assign_to" /></div>'
-								+ "</form>"
-								+ "</div>" + "</div>");
+		this.subModuleContainer = null;
+		this.initUI = function(){
+			var ui = $("<div>")
+			.addClass("module")
+			.addClass("LoopModule")
+			.html(
+					"<div>"
+							+ "<div class='title ui-widget-header'><span></span>"
+							+ "<ul class='buttons'></ul>"
+							+ "</div>"
+							+ "<div class='content'>"
+							+ "<form>"
+							+ "<div><span>For each <input name='with' value='item' /> in input</span></div>"
+							+ "<div class='submodule empty'></div>"
+							+ '<div><input name="mode" type="radio" value="emit">emit <select name="emit_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results</div>'
+							+ '<div><input name="mode" type="radio" value="assign">assign <select name="assign_part" style="display: inline;"><option value="all">all</option><option value="first">first</option></select> results to <input name="assign_to" /></div>'
+							+ "</form>"
+							+ "</div>" + "</div>");
+			ui.find("div.title>span").text("Loop");
+			ui.find("ul.buttons").append(
+					$("<li>").addClass("minimal ui-icon ui-icon-minus"),
+					$("<li>").addClass("remove ui-icon ui-icon-close"));
+			this.subModuleContainer = ui.find("div.submodule");
+			return ui;
+		};
+		
+		this.ui = this.initUI();
 
-		this.ui.find("div.title>span").text("Loop");
-		this.ui.find("ul.buttons").append(
-				$("<li>").addClass("minimal ui-icon ui-icon-minus"),
-				$("<li>").addClass("remove ui-icon ui-icon-close"));
+		
 
 		this.getConf = function() {
 			var conf = {};
@@ -189,9 +197,31 @@ JSON.stringify = JSON.stringify || function(obj) {
 		
 		this.removeSubModule = function(module){
 			module.ui.remove();
-			this.ui.find(".submodule").addClass("empty")
+			this.ui.find(".submodule").addClass("empty");
+			this.subModule = null;
 		};
-
+		
+		this.getSubModuleContainer = function(){
+			return this.subModuleContainer;
+		};
+		
+		this.acceptSubModule = function (moduleType){
+			if (this.subModule == null){
+				return true;
+			}
+			return false;
+		};
+		
+		this.appendSubModule = function(subModule){
+			this.subModule = subModule;
+			this.subModuleContainer.append(subModule.ui).removeClass("empty");
+			subModule.ui.find(".remove").click((function(parent, subModule){
+				return function(event){
+					event.stopPropagation();
+					parent.removeSubModule(subModule);
+					};
+			})(this, subModule));
+		};
 	}
 	
 	function OutputModule(){
@@ -436,6 +466,22 @@ JSON.stringify = JSON.stringify || function(obj) {
 						drop : function(event, ui) {
 							controlType = ui.draggable.attr("control-type");
 							if (controlType) {
+								for(var moduleIndex in $editor.modules){
+									var module = $editor.modules[moduleIndex];
+									if (module.getSubModuleContainer){
+										var subModuleContainer = module.getSubModuleContainer();
+										subModuleContainerOffset = subModuleContainer.offset();
+										if(event.pageX >= subModuleContainerOffset.left &&
+												event.pageX <= subModuleContainerOffset.left + subModuleContainer.width()&&
+												event.pageY >= subModuleContainerOffset.top &&
+												event.pageY <= subModuleContainerOffset.top + subModuleContainer.height()&&
+												module.acceptSubModule(controlType)){
+											subModule = $editor.buildModule(controlType);
+											module.appendSubModule(subModule);
+											return;
+										}
+									}
+								}
 								newControl = $editor.buildModule(controlType);
 								$editor.addModule(newControl);
 
