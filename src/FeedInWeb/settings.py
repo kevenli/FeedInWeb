@@ -30,30 +30,44 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.contenttypes', 
+    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.admin',
     'pages',
     'users',
-    'feeds'
+    'feeds',
+
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    #'django.middleware.clickjacking.XFrameOptionsMiddleware', 
 )
 
 ROOT_URLCONF = 'FeedInWeb.urls'
 
 WSGI_APPLICATION = 'FeedInWeb.wsgi.application'
-
-
+AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
+#SESSION_COOKIE_DOMAIN = 'localhost'
+SESSION_COOKIE_SECURE = False
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
 DATABASES = {
-
+        'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST' : 'localhost',
+        'NAME': 'feedin',
+        'USER': 'feedin',
+        'PASSWORD': 'feedin'
+    }
 }
 
 # Internationalization
@@ -61,7 +75,7 @@ DATABASES = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -73,6 +87,8 @@ SETTINGS_PATH = os.path.dirname(os.path.dirname(__file__))
 TEMPLATE_DIRS = (
     os.path.join(SETTINGS_PATH, 'templates'),
 )
+
+LOGIN_URL = '/users/login'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/

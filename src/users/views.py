@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate
 import django.contrib.auth
 
-# Create your views here.
 def login(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -11,6 +10,13 @@ def login(request):
         if user is not None:
             if user.is_active:
                 django.contrib.auth.login(request, user)
-                return redirect('/')
+                if request.GET['next']:
+                    return redirect(request.GET['next'])
+                else:
+                    return redirect('/')
     context = {}
     return render(request, 'users/login.html', context)
+
+def logout(request):
+    django.contrib.auth.logout(request)
+    return render(request, 'users/login.html', {})
